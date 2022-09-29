@@ -1,15 +1,22 @@
 <script setup lang="ts">
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { inject, Ref } from 'vue';
 
-const x = ref('0px');
-const y = ref('0px');
+const lerpAmount = 0.1;
+
+const mouse = ref({ x: 0, y: 0 });
+const x = ref(0);
+const y = ref(0);
 const hovering = ref(false);
 const cursorContent = inject<Ref<string | null>>('cursor');
 
-const handleMouseMove = useThrottle((event: MouseEvent) => {
-  x.value = `${event.clientX}px`;
-  y.value = `${event.clientY}px`;
+const lerp = (start: number, end: number) =>
+  (1 - lerpAmount) * start + lerpAmount * end;
+
+const handleMouseMove = (event: MouseEvent) => {
+  mouse.value = {
+    x: event.clientX,
+    y: event.clientY,
+  };
 
   switch ((event.target as Element).tagName) {
     case 'BUTTON':
@@ -20,10 +27,26 @@ const handleMouseMove = useThrottle((event: MouseEvent) => {
       hovering.value = false;
       break;
   }
-}, 20);
+};
+
+const loop = () => {
+  x.value = lerp(x.value, mouse.value.x);
+  y.value = lerp(y.value, mouse.value.y);
+
+  requestAnimationFrame(() => loop());
+};
 
 onMounted(() => {
+  x.value = window.innerWidth / 2;
+  y.value = window.innerHeight / 2;
+  mouse.value = {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  };
+
   window.addEventListener('mousemove', handleMouseMove);
+
+  loop();
 });
 
 onUnmounted(() => {
@@ -32,23 +55,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="container"
+  <span
+    :class="['follower', { hovering }, { big: cursorContent }]"
+    data-scroll
+    data-scroll-sticky
+    data-scroll-target="main"
+  />
+  <!-- eslint-disable-next-line vue/no-multiple-template-root -->
+  <span
+    :class="['text-container', { visible: cursorContent }]"
     data-scroll
     data-scroll-sticky
     data-scroll-target="main"
   >
-    <span :class="['cursor', { small: hovering }, { big: cursorContent }]">
-      <Transition mode="out-in">
-        <p v-if="cursorContent" class="text">{{ cursorContent }}</p>
-      </Transition>
-    </span>
-  </div>
+    <Transition mode="out-in">
+      <p v-if="cursorContent" class="text">
+        {{ cursorContent }}
+      </p>
+    </Transition>
+  </span>
 </template>
 
 <style scoped lang="scss">
-@use '../styles/variables';
-
 @keyframes appear {
   0%,
   75% {
@@ -56,69 +84,69 @@ onUnmounted(() => {
   }
 
   100% {
-    width: 2rem;
+    width: 1rem;
   }
 }
 
-.container {
+.follower,
+.text-container {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
   pointer-events: none;
+  background-color: variables.$white;
+  border-radius: 50%;
+  translate: calc(v-bind(x) * 1px) calc(v-bind(y) * 1px);
   z-index: 999;
 }
 
-.cursor {
-  width: 3rem;
+.follower {
+  width: 1rem;
   aspect-ratio: 1 / 1;
-  background-color: variables.$green;
-  border-radius: 50%;
+  top: -0.5rem;
+  left: -0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  top: -1.5rem;
-  left: -1.5rem;
-  transform: translate(v-bind(x), v-bind(y));
-  animation: appear 2s variables.$ease-in-out;
-  transition: transform 300ms cubic-bezier(0.2, 0.5, 0.5, 1),
-    width 0.5s variables.$ease-in-out, top 0.5s variables.$ease-in-out,
+  mix-blend-mode: difference;
+  animation: appear 1s variables.$ease-in-out;
+  transition: width 0.5s variables.$ease-in-out, top 0.5s variables.$ease-in-out,
     left 0.5s variables.$ease-in-out,
     background-color 0.5s variables.$ease-in-out;
 
-  &.small {
-    width: 0.8rem;
-    top: -0.4rem;
-    left: -0.4rem;
-    background-color: variables.$white;
+  &.hovering {
+    width: 3rem;
+    top: -1.5rem;
+    left: -1.5rem;
   }
+}
 
-  &.big {
+.text-container {
+  width: 0;
+  top: 0;
+  left: 0;
+  aspect-ratio: 1 / 1;
+  color: variables.$dark;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.5s variables.$ease-in-out, top 0.5s variables.$ease-in-out,
+    left 0.5s variables.$ease-in-out;
+
+  &.visible {
     width: 16rem;
-    top: -9rem;
+    top: -8rem;
     left: -8rem;
-    background-color: variables.$white;
-  }
-
-  .text {
-    position: absolute;
-    color: variables.$dark;
-    width: 12rem;
-    text-align: center;
   }
 }
 
 .v-enter-active,
 .v-leave-active {
-  clip-path: inset(0 0 0 0);
-  transition: clip-path 1s variables.$ease-in-out;
+  scale: 1;
+  transition: scale 0.5s variables.$ease-in-out;
 }
 
 .v-enter-from,
 .v-leave-to {
-  clip-path: inset(0 0 0 100%);
-  transition: clip-path 0.3s variables.$ease-in-out;
+  scale: 0;
+  transition: scale 0.3s variables.$ease-in-out;
 }
 </style>
