@@ -1,3 +1,9 @@
+<script setup lang="ts">
+useHead({
+  titleTemplate: 'Colin Lienard | %s',
+});
+</script>
+
 <template>
   <NuxtLayout name="page">
     <ContentDoc tag="article" />
@@ -6,8 +12,6 @@
 </template>
 
 <style lang="scss">
-@use '../styles/screens';
-
 article {
   display: flex;
   flex-direction: column;

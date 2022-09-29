@@ -70,7 +70,14 @@ onUnmounted(() => {
 
 <template>
   <aside :class="['spotify', { disabled: music === null }]">
-    <img src="/icons/spotify.svg" alt="" class="icon" width="24" height="24" />
+    <NuxtImg
+      src="/icons/spotify.svg"
+      alt=""
+      class="icon"
+      width="24"
+      height="24"
+      quality="100"
+    />
     <a
       v-if="music"
       class="text"
@@ -90,8 +97,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-@use '../styles/variables';
-
 @keyframes music {
   0% {
     clip-path: inset(70% 0 0 0);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  title: 'Colin Lienard 👋',
+  title: 'Colin Lienard | Webdesigner & développeur front-end',
   meta: [
     {
       name: 'description',
@@ -13,8 +13,7 @@ useHead({
 
 <template>
   <NuxtLayout name="page">
-    <BaseNavbar />
-    <HomeHeader />
+    <HomeHeroSection />
     <HomePortfolio />
     <HomeAbout />
     <HomeContact />
